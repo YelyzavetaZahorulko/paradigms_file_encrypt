@@ -49,8 +49,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/cmake-build-debug",
-		"source" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt"
+		"build" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug",
+		"source" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt"
 	},
 	"version" : 
 	{

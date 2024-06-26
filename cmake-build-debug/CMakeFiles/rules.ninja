@@ -42,7 +42,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = /Applications/CLion.app/Contents/bin/cmake/mac/aarch64/bin/cmake --regenerate-during-build -S/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt -B/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/cmake-build-debug
+  command = /Applications/CLion.app/Contents/bin/cmake/mac/aarch64/bin/cmake --regenerate-during-build -S/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt -B/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug
   description = Re-running CMake...
   generator = 1
 

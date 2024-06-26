@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/cmake-build-debug"
+			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -479,7 +479,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/cmake-build-debug/CMakeFiles/pkgRedirects"
+			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -539,7 +539,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt"
+			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt"
 		},
 		{
 			"name" : "CMAKE_INSTALL_NAME_TOOL",
@@ -555,7 +555,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/Users/yelyzaveta/anaconda3/bin/install_name_tool"
+			"value" : "/usr/bin/install_name_tool"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -1127,7 +1127,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/cmake-build-debug"
+			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug"
 		},
 		{
 			"name" : "paradigms_file_encrypt_IS_TOP_LEVEL",
@@ -1151,7 +1151,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt"
+			"value" : "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt"
 		}
 	],
 	"kind" : "cache",

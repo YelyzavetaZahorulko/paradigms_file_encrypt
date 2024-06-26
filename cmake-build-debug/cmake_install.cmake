@@ -1,4 +1,4 @@
-# Install script for directory: /Users/yelyzaveta/CLionProjects/paradigms_file_encrypt
+# Install script for directory: /Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
