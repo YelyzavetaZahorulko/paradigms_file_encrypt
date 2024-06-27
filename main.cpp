@@ -1,12 +1,75 @@
 #include <cstdio>
 #include <cstdlib>
 #include <stack>
+#include <dlfcn.h>
 
 #define INITIAL_CAPACITY 100
 #define MAX_LINES 100
 #define MAX_LINE_LENGTH 100
 
-class TextContainer {
+class CaesarCipher {
+private:
+    void* libraryHandle;  // Handle for the dynamically loaded library
+    void (*encryptFunc)(char*, int); // Pointer to the encrypt function
+    void (*decryptFunc)(char*, int); // Pointer to the decrypt function
+
+public:
+    CaesarCipher(const char* libraryPath) : libraryHandle(nullptr), encryptFunc(nullptr), decryptFunc(nullptr) {
+        // Load the library
+        libraryHandle = dlopen(libraryPath, RTLD_LAZY);
+        if (!libraryHandle) {
+            fprintf(stderr, "Error: %s\n", dlerror());
+            exit(EXIT_FAILURE);
+        }
+
+        // Reset errors
+        dlerror();
+
+        encryptFunc = (void (*)(char*, int))dlsym(libraryHandle, "encrypt");
+        char* error = dlerror();
+        if (error != nullptr) {
+            fprintf(stderr, "Error loading encrypt function: %s\n", error);
+            dlclose(libraryHandle);
+            exit(EXIT_FAILURE);
+        }
+
+        // Load the decrypt function
+        decryptFunc = (void (*)(char*, int))dlsym(libraryHandle, "decrypt");
+        error = dlerror();
+        if (error != nullptr) {
+            fprintf(stderr, "Error loading decrypt function: %s\n", error);
+            dlclose(libraryHandle);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // Destructor to close the library
+    ~CaesarCipher() {
+        if (libraryHandle) {
+            dlclose(libraryHandle);
+        }
+    }
+
+    // Method to call the encrypt function from the library
+    void encrypt(char* text, int shift) {
+        if (encryptFunc) {
+            encryptFunc(text, shift);
+        } else {
+            fprintf(stderr, "Error: encrypt function not loaded.\n");
+        }
+    }
+
+    // Method to call the decrypt function from the library
+    void decrypt(char* text, int shift) {
+        if (decryptFunc) {
+            decryptFunc(text, shift);
+        } else {
+            fprintf(stderr, "Error: decrypt function not loaded.\n");
+        }
+    }
+};
+
+class TextContainer{
 private:
     char* buffer; // for dynamic memory allocation
     int current_size;
@@ -149,10 +212,59 @@ public:
         }
     }
 
+    char* encrypt(const char* rawText, int key) {
+        int length = myStrlen(rawText);
+        char* encryptedText = new char[length + 1];
+
+        key = key % 26;
+
+        for (int i = 0; i < length; ++i) {
+            char ch = rawText[i];
+
+            if (ch >= 'A' && ch <= 'Z') {
+                encryptedText[i] = 'A' + (ch - 'A' + key) % 26;
+            }
+            else if (ch >= 'a' && ch <= 'z') {
+                encryptedText[i] = 'a' + (ch - 'a' + key) % 26;
+            }
+            else {
+                encryptedText[i] = ch;
+            }
+        }
+        encryptedText[length] = '\0';
+        printf("Encypted text: %s \n", encryptedText);
+        return encryptedText;
+    }
+
+    char* decrypt(char* encryptedText, int key) {
+        int length = myStrlen(encryptedText);
+        char* decryptedText = new char[length + 1];
+
+        key = key % 26;
+
+        for (int i = 0; i < length; ++i) {
+            char ch = encryptedText[i];
+
+            if (ch >= 'a' && ch <= 'z') {
+                decryptedText[i] = 'a' + (ch - 'a' - key + 26) % 26;
+            } else if (ch >= 'A' && ch <= 'Z') {
+                decryptedText[i] = 'A' + (ch - 'A' - key + 26) % 26;
+            } else {
+                decryptedText[i] = ch;
+            }
+        }
+
+        decryptedText[length] = '\0';
+        printf("Decypted text: %s \n",decryptedText);
+        return decryptedText;
+    }
+
+
 };
 class TextEditor {
 private:
     TextContainer* text_array;
+    TextContainer container;
     int line_count ;
     int capacity;
     char* clipboard;
@@ -243,8 +355,8 @@ public:
         printf("12 - paste text by line and index \n");
         printf("13 - undo \n");
         printf("14 - redo \n");
-        printf("15 - move cursor up\n");
-        printf("16 - move cursor down\n");
+        printf("15 - encrypt text\n");
+        printf("16 - decrypt text\n");
         printf("17 - move cursor left\n");
         printf("18 - move cursor right\n");
         printf("19 - exit the program\n");
@@ -373,13 +485,9 @@ public:
         }
         saveState();
         text_array[line].deleteText(index, count);
-        // text_array[cursorLine].deleteText(cursorIndex, count);
-        //cursorIndex -= TextContainer::myStrlen(text_to_append);
     }
 
     void insertReplacement(int line, int index, const char* text_to_replace) {
-        // int line = cursorLine;
-        // int index = cursorIndex;
 
         if (line >= line_count || line < 0) {
             printf("Error: Invalid line number.\n");
@@ -416,8 +524,6 @@ public:
     }
 
     void copyText(int line, int index, int count) {
-        // int line = cursorLine;
-        // int index = cursorIndex;
 
         if (line >= line_count || line < 0) {
             printf("Error: Invalid line number.\n");
@@ -440,8 +546,6 @@ public:
     }
 
     void pasteText(int line, int index) {
-        // int line = cursorLine;
-        // int index = cursorIndex;
 
         if (line >= line_count || line < 0) {
             printf("Error: Invalid line number.\n");
@@ -505,46 +609,6 @@ public:
 
         printf("Redo successful. Restored to the previous state.\n");
     }
-
-    void moveCursorUp() {
-        if (cursorLine > 0) {
-            cursorLine--;
-            if (cursorIndex > text_array[cursorLine].getCurrentSize()) {
-                cursorIndex = text_array[cursorLine].getCurrentSize();
-            }
-        }
-    }
-
-    void moveCursorDown() {
-            if (cursorLine < line_count - 1) {
-                cursorLine++;
-                // Перевіряємо, щоб курсор не виходив за межі нового рядка
-                if (cursorIndex > text_array[cursorLine].getCurrentSize()) {
-                    cursorIndex = text_array[cursorLine].getCurrentSize();
-                }
-            }
-        }
-
-    void moveCursorLeft() {
-        if (cursorIndex > 0) {
-            cursorIndex--;
-        } else if (cursorLine > 0) {
-            cursorLine--;
-            cursorIndex = text_array[cursorLine].getCurrentSize();
-        }
-    }
-
-    void moveCursorRight() {
-        if (cursorLine < line_count) {
-            if (cursorIndex < text_array[cursorLine].getCurrentSize()) {
-                cursorIndex++;
-            } else if (cursorLine < line_count - 1) {
-                cursorLine++;
-                cursorIndex = 0;
-            }
-        }
-    }
-
 
 
     void handleCommand(int command) {
@@ -685,19 +749,23 @@ public:
         else if (command == 14) {
             redo();
         }
+        else if (command == 15) {
+            printf("Enter text to encrypt: ");
+            getline(&input, &input_size, stdin);
+            printf("Enter encryption key: ");
+            int key;
+            scanf("%d", &key);
+            container.encrypt(input, key);
+        }
         else if (command == 16) {
-            moveCursorUp();
-        }
-        else if (command == 17) {
-            moveCursorDown();
-        }
-        else if (command == 18) {
-            moveCursorLeft();
+            printf("Enter text to decrypt: ");
+            getline(&input, &input_size, stdin);
+            printf("Enter encryption key: ");
+            int key;
+            scanf("%d", &key);
+            container.decrypt(input, key);
         }
         else if (command == 19) {
-            moveCursorRight();
-        }
-        else if (command == 16) {
             freeMemory();
             exit(0);
         }
@@ -726,7 +794,7 @@ int main() {
             continue;
         }
 
-        if (command == 19) { // If the command is 10, we break the loop to exit
+        if (command == 19) { // If the command is 19, we break the loop to exit
             printf(">Exiting...\n");
             break;
         }
