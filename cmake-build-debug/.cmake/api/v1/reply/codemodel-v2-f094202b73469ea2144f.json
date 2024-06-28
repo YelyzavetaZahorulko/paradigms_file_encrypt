@@ -15,7 +15,9 @@
 					"source" : ".",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1,
+						2
 					]
 				}
 			],
@@ -30,7 +32,9 @@
 					"name" : "paradigms_file_encrypt",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1,
+						2
 					]
 				}
 			],
@@ -38,8 +42,22 @@
 			[
 				{
 					"directoryIndex" : 0,
+					"id" : "caesar::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-caesar-Debug-271fffa238af2abae6d0.json",
+					"name" : "caesar",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "main::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-main-Debug-74a4d896dfbabcd10bdf.json",
+					"name" : "main",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
 					"id" : "paradigms_file_encrypt::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-paradigms_file_encrypt-Debug-17ae9e3048bbbe9bf3a9.json",
+					"jsonFile" : "target-paradigms_file_encrypt-Debug-4ea3de79327858dad3f9.json",
 					"name" : "paradigms_file_encrypt",
 					"projectIndex" : 0
 				}

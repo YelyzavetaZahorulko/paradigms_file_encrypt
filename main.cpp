@@ -2,70 +2,49 @@
 #include <cstdlib>
 #include <stack>
 #include <dlfcn.h>
+#include "caesar.h"
 
 #define INITIAL_CAPACITY 100
 #define MAX_LINES 100
 #define MAX_LINE_LENGTH 100
 
-class CaesarCipher {
+class Caesar {
 private:
-    void* libraryHandle;  // Handle for the dynamically loaded library
-    void (*encryptFunc)(char*, int); // Pointer to the encrypt function
-    void (*decryptFunc)(char*, int); // Pointer to the decrypt function
+    void* handle;
+    typedef char* (*EncryptFunc)(const char*, int);
+    typedef char* (*DecryptFunc)(char*, int);
+    EncryptFunc encryptFunc;
+    DecryptFunc decryptFunc;
 
 public:
-    CaesarCipher(const char* libraryPath) : libraryHandle(nullptr), encryptFunc(nullptr), decryptFunc(nullptr) {
-        // Load the library
-        libraryHandle = dlopen(libraryPath, RTLD_LAZY);
-        if (!libraryHandle) {
+    Caesar() {
+        handle = dlopen("./libcrypt.so", RTLD_LAZY);
+        if (!handle) {
             fprintf(stderr, "Error: %s\n", dlerror());
-            exit(EXIT_FAILURE);
+            return;
         }
 
-        // Reset errors
-        dlerror();
-
-        encryptFunc = (void (*)(char*, int))dlsym(libraryHandle, "encrypt");
-        char* error = dlerror();
-        if (error != nullptr) {
-            fprintf(stderr, "Error loading encrypt function: %s\n", error);
-            dlclose(libraryHandle);
-            exit(EXIT_FAILURE);
-        }
-
-        // Load the decrypt function
-        decryptFunc = (void (*)(char*, int))dlsym(libraryHandle, "decrypt");
-        error = dlerror();
-        if (error != nullptr) {
-            fprintf(stderr, "Error loading decrypt function: %s\n", error);
-            dlclose(libraryHandle);
-            exit(EXIT_FAILURE);
+        encryptFunc = (EncryptFunc)dlsym(handle, "encrypt");
+        decryptFunc = (DecryptFunc)dlsym(handle, "decrypt");
+        if (!encryptFunc || !decryptFunc) {
+            fprintf(stderr, "Error: %s\n", dlerror());
+            dlclose(handle);
+            handle = nullptr;
         }
     }
 
-    // Destructor to close the library
-    ~CaesarCipher() {
-        if (libraryHandle) {
-            dlclose(libraryHandle);
+    ~Caesar() {
+        if (handle) {
+            dlclose(handle);
         }
     }
 
-    // Method to call the encrypt function from the library
-    void encrypt(char* text, int shift) {
-        if (encryptFunc) {
-            encryptFunc(text, shift);
-        } else {
-            fprintf(stderr, "Error: encrypt function not loaded.\n");
-        }
+    char* encrypt_text(const char* text, int key) {
+        return encrypt(text, key);
     }
 
-    // Method to call the decrypt function from the library
-    void decrypt(char* text, int shift) {
-        if (decryptFunc) {
-            decryptFunc(text, shift);
-        } else {
-            fprintf(stderr, "Error: decrypt function not loaded.\n");
-        }
+    char* decrypt_text(const char* text, int key) {
+        return decrypt(text, key);
     }
 };
 
@@ -212,66 +191,16 @@ public:
         }
     }
 
-    char* encrypt(const char* rawText, int key) {
-        int length = myStrlen(rawText);
-        char* encryptedText = new char[length + 1];
-
-        key = key % 26;
-
-        for (int i = 0; i < length; ++i) {
-            char ch = rawText[i];
-
-            if (ch >= 'A' && ch <= 'Z') {
-                encryptedText[i] = 'A' + (ch - 'A' + key) % 26;
-            }
-            else if (ch >= 'a' && ch <= 'z') {
-                encryptedText[i] = 'a' + (ch - 'a' + key) % 26;
-            }
-            else {
-                encryptedText[i] = ch;
-            }
-        }
-        encryptedText[length] = '\0';
-        printf("Encypted text: %s \n", encryptedText);
-        return encryptedText;
-    }
-
-    char* decrypt(char* encryptedText, int key) {
-        int length = myStrlen(encryptedText);
-        char* decryptedText = new char[length + 1];
-
-        key = key % 26;
-
-        for (int i = 0; i < length; ++i) {
-            char ch = encryptedText[i];
-
-            if (ch >= 'a' && ch <= 'z') {
-                decryptedText[i] = 'a' + (ch - 'a' - key + 26) % 26;
-            } else if (ch >= 'A' && ch <= 'Z') {
-                decryptedText[i] = 'A' + (ch - 'A' - key + 26) % 26;
-            } else {
-                decryptedText[i] = ch;
-            }
-        }
-
-        decryptedText[length] = '\0';
-        printf("Decypted text: %s \n",decryptedText);
-        return decryptedText;
-    }
-
-
 };
 class TextEditor {
 private:
+    Caesar* caesar;
     TextContainer* text_array;
-    TextContainer container;
     int line_count ;
     int capacity;
     char* clipboard;
     std::stack<TextContainer*> undo_stack;
     std::stack<TextContainer*> redo_stack;
-    int cursorLine;
-    int cursorIndex;
 
     void freeMemory() {
         if (text_array != nullptr) {
@@ -321,14 +250,11 @@ private:
     }
 
 public:
-    TextEditor() {
+    TextEditor()  {
         text_array = nullptr;
         line_count = 0;
         capacity =INITIAL_CAPACITY;
         clipboard = nullptr;
-        cursorLine = 0;
-        cursorIndex = 0;
-
     }
 
     ~TextEditor() {
@@ -355,10 +281,10 @@ public:
         printf("12 - paste text by line and index \n");
         printf("13 - undo \n");
         printf("14 - redo \n");
-        printf("15 - encrypt text\n");
-        printf("16 - decrypt text\n");
-        printf("17 - move cursor left\n");
-        printf("18 - move cursor right\n");
+        printf("15 - encrypt file \n");
+        printf("16 - decrypt file\n");
+        printf("17 - encrypt text\n");
+        printf("18 - decrypt text\n");
         printf("19 - exit the program\n");
     }
 
@@ -386,10 +312,9 @@ public:
             resize(capacity*2);
         }
         saveState();
-        text_array[cursorLine].insert(cursorIndex, text_to_append);
-        cursorIndex += TextContainer::myStrlen(text_to_append);
+        text_array[line_count].append(text_to_append);
+        line_count++;
     }
-
 
     void saveToFile(const char* filename) {
         FILE* file = fopen(filename, "w");
@@ -404,7 +329,7 @@ public:
         printf(">Text has been saved successfully");
     }
 
-    void loadFromFile(char* filename) {
+    void loadFromFile(const char* filename) {
         FILE* file = fopen(filename, "r");
         if (file == nullptr) {
             printf(">Unable to open file for reading.\n");
@@ -435,17 +360,15 @@ public:
         for (int i = 0; i < line_count; i++) {
             printf("%s\n", text_array[i].getBuffer());
         }
-        printf("Cursor at line %d, index %d\n", cursorLine + 1, cursorIndex);
     }
 
-    void insertText(int line, int index, const char* text_to_insert) {
+    void insertText(int line, int index,const char* text_to_insert) {
         if ( line >= line_count || line < 0) {
             printf("Error: Invalid line number. \n");
             return;
         }
         saveState();
-        text_array[cursorLine].insert(cursorIndex, text_to_insert);
-        cursorIndex += TextContainer::myStrlen(text_to_insert);
+        text_array[line].insert(index, text_to_insert);
     }
 
     void search_word(char* word) {
@@ -497,10 +420,7 @@ public:
         text_array[line].insertReplacement(index, text_to_replace);
     }
 
-    void cutText(int count) {
-        int line = cursorLine;
-        int index = cursorIndex;
-
+    void cutText(int line, int index, int count) {
         if (line >= line_count || line < 0) {
             printf("Error: Invalid line number.\n");
             return;
@@ -586,7 +506,6 @@ public:
         printf("Undo successful. Restored to the previous state.\n");
     }
 
-
     void redo() {
         if (redo_stack.empty()) {
             printf("No steps to redo.\n");
@@ -610,6 +529,29 @@ public:
         printf("Redo successful. Restored to the previous state.\n");
     }
 
+    void encryptFile(const char* inputFilename, const char* outputFilename, int key) {
+        loadFromFile(inputFilename);
+
+        for (int i = 0; i < line_count; i++) {
+            char* encryptedText = caesar->encrypt_text(text_array[i].getBuffer(), key);
+            text_array[i].append(encryptedText);
+            delete[] encryptedText;
+        }
+
+        saveToFile(outputFilename);
+    }
+
+    void decryptFile(const char* inputFilename, const char* outputFilename, int key) {
+        loadFromFile(inputFilename);
+
+        for (int i = 0; i < line_count; i++) {
+            char* decryptedText = caesar->decrypt_text(text_array[i].getBuffer(), key);
+            text_array[i].append(decryptedText);
+            delete[] decryptedText;
+        }
+
+        saveToFile(outputFilename);
+    }
 
     void handleCommand(int command) {
         char* input = nullptr;
@@ -710,16 +652,16 @@ public:
             free(input);
         }
         else if (command == 10) {
-            // printf("Enter line number: ");
-            // int line;
-            // scanf("%d", &line);
-            // printf("Enter start index: ");
-            // int index;
-            // scanf("%d", &index);
+            printf("Enter line number: ");
+            int line;
+            scanf("%d", &line);
+            printf("Enter start index: ");
+            int index;
+            scanf("%d", &index);
             printf("Enter number of characters to cut: ");
             int count;
             scanf("%d", &count);
-            cutText(count);
+            cutText(line, index, count);
         }
         else if (command == 11) {
             printf("Enter line number: ");
@@ -750,20 +692,98 @@ public:
             redo();
         }
         else if (command == 15) {
-            printf("Enter text to encrypt: ");
+            printf("Enter input filename to encrypt: ");
             getline(&input, &input_size, stdin);
+            int len = 0;
+            while (input[len] != '\n' && input[len] != '\0') {
+                len++;
+            }
+            input[len] = '\0';
+            char* inputFilename = strdup(input);
+
+            printf("Enter output filename: ");
+            getline(&input, &input_size, stdin);
+            len = 0;
+            while (input[len] != '\n' && input[len] != '\0') {
+                len++;
+            }
+            input[len] = '\0';
+            char* outputFilename = strdup(input);
+
             printf("Enter encryption key: ");
             int key;
             scanf("%d", &key);
-            container.encrypt(input, key);
+            getchar();  // Clear the newline character
+
+            encryptFile(inputFilename, outputFilename, key);
+
+            free(inputFilename);
+            free(outputFilename);
         }
         else if (command == 16) {
-            printf("Enter text to decrypt: ");
+            printf("Enter input filename to decrypt: ");
             getline(&input, &input_size, stdin);
+            int len = 0;
+            while (input[len] != '\n' && input[len] != '\0') {
+                len++;
+            }
+            input[len] = '\0';
+            char* inputFilename = strdup(input);
+
+            printf("Enter output filename: ");
+            getline(&input, &input_size, stdin);
+            len = 0;
+            while (input[len] != '\n' && input[len] != '\0') {
+                len++;
+            }
+            input[len] = '\0';
+            char* outputFilename = strdup(input);
+
+            printf("Enter decryption key: ");
+            int key;
+            scanf("%d", &key);
+            getchar();
+
+            decryptFile(inputFilename, outputFilename, key);
+
+            free(inputFilename);
+            free(outputFilename);
+        }
+        else if (command == 17) {
+            printf("Enter text to encrypt: ");
+            getline(&input, &input_size, stdin);
+            int len = 0;
+            while (input[len] != '\n' && input[len] != '\0') {
+                len++;
+            }
+            input[len] = '\0';
+
             printf("Enter encryption key: ");
             int key;
             scanf("%d", &key);
-            container.decrypt(input, key);
+            getchar();  // Clear the newline character
+
+            char* encryptedText = caesar->encrypt_text(input, key);
+            printf("Encrypted text: %s\n", encryptedText);
+            delete[] encryptedText;
+        }
+        else if (command == 18) {
+            printf("Enter text to decrypt: ");
+            getline(&input, &input_size, stdin);
+            int len = 0;
+            while (input[len] != '\n' && input[len] != '\0') {
+                len++;
+            }
+            input[len] = '\0';
+
+            printf("Enter encryption key: ");
+            int key;
+            scanf("%d", &key);
+            getchar();  // Clear the newline character
+
+            char* decryptedText = caesar->decrypt_text(input, key);
+            printf("Encrypted text: %s\n", decryptedText);
+            delete[] decryptedText;
         }
         else if (command == 19) {
             freeMemory();

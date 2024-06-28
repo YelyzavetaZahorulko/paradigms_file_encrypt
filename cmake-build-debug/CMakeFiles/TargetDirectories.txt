@@ -1,3 +1,5 @@
 /Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug/CMakeFiles/paradigms_file_encrypt.dir
+/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug/CMakeFiles/caesar.dir
+/Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug/CMakeFiles/main.dir
 /Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug/CMakeFiles/edit_cache.dir
 /Users/yelyzaveta/CLionProjects/paradigms_file_encrypt/paradigms_file_encrypt/cmake-build-debug/CMakeFiles/rebuild_cache.dir
